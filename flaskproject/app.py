@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_mysqldb import MySQL
+from MySQLdb.connections import OperationalError
 
 
 app = Flask(__name__)
@@ -33,5 +34,6 @@ def database():
    # mysql.connection.commit()
    cur.close()
    return "Done!"
+  
 if __name__ == '__main__':
    app.run(debug=True)

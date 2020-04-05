@@ -18,6 +18,12 @@ class FlaskTestCases(unittest.TestCase):
         tester = app.test_client(self)
         response = tester.get("/register",content_type='html/text')
         self.assertEqual(response.get_data(),b"Please register")
+    
+    def test_for_database_connetion_then_itShould_returns_done(self):
+        tester = app.test_client(self)
+        response = tester.get("/database",content_type='html/text')
+        self.assertEqual(response.get_data(),b"Done!")
 
+    
 if  __name__ == "__main__":
     unittest.main()
