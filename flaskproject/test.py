@@ -24,6 +24,11 @@ class FlaskTestCases(unittest.TestCase):
         response = tester.get("/database",content_type='html/text')
         self.assertEqual(response.get_data(),b"Done!")
 
-    
+    def test_for_already_existed_table(self):
+        tester = app.test_client(self)
+        response = tester.get("/database",content_type='html/text')
+        self.assertEqual(response.get_data(),b"Table already existed")
+
+
 if  __name__ == "__main__":
     unittest.main()
