@@ -31,12 +31,13 @@ def register():
 def database():
    try:
       cur = mysql.connection.cursor()
-      cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
-      # mysql.connection.commit()
+      # cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
+      cur.execute("INSERT INTO  example (id,name) VALUES(%s,%s)",("2","divyareddy"))
+      mysql.connection.commit()
       cur.close()
       return "Done!"
-   except OperationalError as err:
+   except OperationalError:
       return "Table already existed"
-      
+
 if __name__ == '__main__':
    app.run(debug=True)
