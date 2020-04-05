@@ -29,11 +29,14 @@ def register():
 
 @app.route('/database')
 def database():
-   cur = mysql.connection.cursor()
-   cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
-   # mysql.connection.commit()
-   cur.close()
-   return "Done!"
-  
+   try:
+      cur = mysql.connection.cursor()
+      cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
+      # mysql.connection.commit()
+      cur.close()
+      return "Done!"
+   except OperationalError as err:
+      return "Table already existed"
+      
 if __name__ == '__main__':
    app.run(debug=True)
