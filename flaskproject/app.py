@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask,render_template
 from flask_mysqldb import MySQL
 from MySQLdb.connections import OperationalError
 
@@ -25,7 +25,7 @@ def login():
 
 @app.route('/register')
 def register():
-   return "Please register"
+   return render_template("register.html")
 
 @app.route('/database')
 def database():
