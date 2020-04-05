@@ -1,4 +1,4 @@
-from flask import Flask,render_template
+from flask import Flask,render_template,request
 from flask_mysqldb import MySQL
 from MySQLdb.connections import OperationalError
 
@@ -23,8 +23,14 @@ def home():
 def login():
    return "Please login"
 
-@app.route('/register')
+@app.route('/register',methods=["GET","POST"])
 def register():
+   if request.method == "POST":
+      username=request.form("username")
+      email=request.form("email")
+      password=request.form("password")
+      confirmpassword=request.form("confirmpassword")
+      return "successfully registered"
    return render_template("register.html")
 
 @app.route('/database')
