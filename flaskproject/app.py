@@ -10,5 +10,11 @@ def home():
 def login():
    return "Please login"
 
+@app.route('/register')
+def register():
+   return "Please register"
+
+
+
 if __name__ == '__main__':
    app.run(debug=True)

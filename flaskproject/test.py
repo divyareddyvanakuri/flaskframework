@@ -14,5 +14,10 @@ class FlaskTestCases(unittest.TestCase):
         response = tester.get("/login",content_type='html/text')
         self.assertEqual(response.get_data(),b"Please login")
 
+    def test_register(self):
+        tester = app.test_client(self)
+        response = tester.get("/register",content_type='html/text')
+        self.assertEqual(response.get_data(),b"Please register")
+
 if  __name__ == "__main__":
     unittest.main()
