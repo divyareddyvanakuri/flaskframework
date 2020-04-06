@@ -17,7 +17,7 @@ mysql = MySQL(app)
 
 @app.route('/')
 def home():
-   return "Hello World"
+   return render_template("home.html")
 
 @app.route('/login')
 def login():
@@ -26,11 +26,12 @@ def login():
 @app.route('/register',methods=["GET","POST"])
 def register():
    if request.method == "POST":
-      username=request.form("username")
-      email=request.form("email")
-      password=request.form("password")
-      confirmpassword=request.form("confirmpassword")
-      return "successfully registered"
+      username=request.form["username"]
+      email=request.form["email"]
+      password=request.form["password"]
+      confirmpassword=request.form["confirmpassword"]
+      cur = mysql.connection.cursor()
+      #cur.execute('''CREATE TABLE users (username VARCHAR(30),email VARCHAR(50),password VARCHAR(100))''')
    return render_template("register.html")
 
 @app.route('/database')
@@ -41,9 +42,10 @@ def database():
       cur.execute("INSERT INTO  example (id,name) VALUES(%s,%s)",("2","divyareddy"))
       mysql.connection.commit()
       cur.close()
-      return "Done!"
+      return "Table is created"
    except OperationalError:
       return "Table already existed"
 
 if __name__ == '__main__':
+   app.secret_key="exobts2020@#$$^&(@!#^("
    app.run(debug=True)

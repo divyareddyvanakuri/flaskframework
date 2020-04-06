@@ -1,17 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% block head %}
-        <title>Main Page</title>
-    {% endblock  %}
-    
-
-</head>
-<body>
-    {% block body %}
-        <p>Welcome to home page</p>
-    {% endblock  %}
-</body>
-</html>
+ {% extends "layout.html" %}
+{% block head %}{% endblock  %}
+ {% block body %}
+ <div class="row">
+    <div class="col-md-6 col-md-offset-3">
+    <h2>Welcome</h2>
+    {% if session['username'] %}
+    <p>you login as {{ session['username'] }}</p>
+    {% else %}
+    <p>Not login yet</p>
+    {% endif %}
+    </div>
+ </div>
+ {% endblock %}

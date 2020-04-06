@@ -6,7 +6,7 @@ class FlaskTestCases(unittest.TestCase):
     def test_home(self):
         tester = app.test_client(self)
         response = tester.get("/")
-        self.assertEqual(response.get_data(),b"Hello World")
+        self.assertEqual(response.status_code,200)
 
     def test_login(self):
         tester = app.test_client(self)
