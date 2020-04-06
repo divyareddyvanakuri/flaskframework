@@ -32,6 +32,10 @@ def register():
       confirmpassword=request.form["confirmpassword"]
       cur = mysql.connection.cursor()
       #cur.execute('''CREATE TABLE users (username VARCHAR(30),email VARCHAR(50),password VARCHAR(100))''')
+      cur.execute("INSERT INTO  users (username,email,password) VALUES(%s,%s,%s)",(username,email,password))
+      mysql.connection.commit()
+      cur.close()
+      return "successfully registered"
    return render_template("register.html")
 
 @app.route('/database')
