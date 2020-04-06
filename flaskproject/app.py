@@ -21,7 +21,7 @@ def home():
 
 @app.route('/login')
 def login():
-   return "Please login"
+   return render_template("login.html")
 
 @app.route('/register',methods=["GET","POST"])
 def register():
