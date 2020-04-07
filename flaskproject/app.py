@@ -31,7 +31,6 @@ def login():
       user = cur.fetchone()
       print(user)
       cur.close()
-      
       if password == user["password"]:
          session["username"] = user["username"]
          session["email"] = user["email"]
@@ -39,6 +38,11 @@ def login():
       else:
          return "Error password and user not match"
    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+   session.clear()
+   return render_template("home.html")
 
 @app.route('/register',methods=["GET","POST"])
 def register():
@@ -55,6 +59,8 @@ def register():
       cur.close()
       return "Registeration done successfully"
    return render_template("register.html")
+
+
 
 @app.route('/database')
 def database():
