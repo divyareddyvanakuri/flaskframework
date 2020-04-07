@@ -1,4 +1,4 @@
-from flask import Flask,render_template,request
+from flask import Flask,render_template,request,session
 from flask_mysqldb import MySQL
 from MySQLdb.connections import OperationalError
 
@@ -19,8 +19,11 @@ mysql = MySQL(app)
 def home():
    return render_template("home.html")
 
-@app.route('/login')
+@app.route('/login',methods=["GET","POST"])
 def login():
+   if request.method == "POST":
+      username = request.form["username"]
+      password = request.form["password"]
    return render_template("login.html")
 
 @app.route('/register',methods=["GET","POST"])
@@ -34,6 +37,7 @@ def register():
       #cur.execute('''CREATE TABLE users (username VARCHAR(30),email VARCHAR(50),password VARCHAR(100))''')
       cur.execute("INSERT INTO  users (username,email,password) VALUES(%s,%s,%s)",(username,email,password))
       mysql.connection.commit()
+      session["username"] = username      
       cur.close()
       return "successfully registered"
    return render_template("register.html")
