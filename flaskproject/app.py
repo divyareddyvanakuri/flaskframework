@@ -31,20 +31,24 @@ def home():
 def login():
    if request.method == "POST":
       username = request.form["username"]
-      print(username)
       password = request.form["password"]
-      cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-      # cur.execute("SELECT * FROM users WHRERE username=%s",[username])
-      cur.execute( "SELECT * FROM users WHERE username LIKE %s", (username,) )
-      user = cur.fetchone()
-      print(user)
-      cur.close()
-      if check_password_hash(user["password"], password,method="sha256"):
-         session["username"] = user["username"]
-         session["email"] = user["email"]
-         return render_template("home.html")
-      else:
-         return "Error password and user not match"
+      try:
+         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+         cur.execute( "SELECT * FROM users WHERE username LIKE %s", (username,) )
+         user = cur.fetchone()
+         print(user)
+         cur.close()
+         try:
+            if check_password_hash(user["password"], password,method="sha256"):
+               session["username"] = user["username"]
+               session["email"] = user["email"]
+               return render_template("home.html")
+            else:
+               return "Error password and user not match"
+         except UnicodeEncodeError as err:
+            flash("somthing went wrong:",err)
+      except OperationalError as err:
+         flash("somthing went wrong:",err)
    return render_template("login.html")
 
 @app.route("/logout")
