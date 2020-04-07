@@ -102,6 +102,16 @@ def reset(token):
       cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
       cur.execute( "SELECT * FROM users WHERE email LIKE %s", (token,) )
       user = cur.fetchone()
+      if user:   
+         cur = mysql.connection.cursor()
+         cur.execute( "UPDATE users SET token=%s,password=%s WHERE token LIKE %s", [token1,password,token] )
+         mysql.connection.commit()
+         cur.close()
+         flash("your password successfully updated","success")
+         return redirect('/login')
+      else:
+         flash("your token is invalide","danger")
+         return redirect("/")
    return render_template("resetpassword.html")
 
 @app.route('/database')
