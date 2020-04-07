@@ -93,30 +93,15 @@ def forgotpassword():
          flash("Email do not match","danger")
    return render_template("forgotpassword.html")
 
-
-
-
-def tokenActivation(username):
-    """
-    Generates the Auth Token
-    :return: string
-    """
-    try:
-        payload = {
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
-            'iat': datetime.datetime.utcnow(),
-            'sub': username
-        }
-        return jwt.encode(
-            payload,
-            app.config.get('SECRET_KEY'),
-            algorithm='HS256'
-        )
-    except Exception as e:
-        return e
-
 @app.route('/reset/<token>',methods=["GET","POST"])
 def reset(token):
+   if request.method == "POST":
+      password = request.form["password"]
+      confirmpassword = request.form["confirmpassword"]
+      token1 = str(uuid.uuid4())
+      cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+      cur.execute( "SELECT * FROM users WHERE email LIKE %s", (token,) )
+      user = cur.fetchone()
    return render_template("resetpassword.html")
 
 @app.route('/database')
