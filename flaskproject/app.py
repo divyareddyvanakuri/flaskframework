@@ -80,25 +80,11 @@ def forgotpassword():
       print(user)
       cur.close()
       token = tokenActivation(user["username"])
-      surl = ShortUrl(token)
+      surl = url_for(token,_external=True)
       print(surl)
       print(token)
       return "please check mail"
    return render_template("forgotpassword.html")
-
-@app.route('/database')
-def database():
-   try:
-      cur = mysql.connection.cursor()
-      # cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
-      cur.execute("INSERT INTO  example (id,name) VALUES(%s,%s)",("2","divyareddy"))
-      mysql.connection.commit()
-      cur.close()
-      return "Table is created"
-   except OperationalError:
-      return "Table already existed"
-
-
 
 def tokenActivation(username):
     """
@@ -118,6 +104,20 @@ def tokenActivation(username):
         )
     except Exception as e:
         return e
+
+
+
+@app.route('/database')
+def database():
+   try:
+      cur = mysql.connection.cursor()
+      # cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
+      cur.execute("INSERT INTO  example (id,name) VALUES(%s,%s)",("2","divyareddy"))
+      mysql.connection.commit()
+      cur.close()
+      return "Table is created"
+   except OperationalError:
+      return "Table already existed"
 
 if __name__ == '__main__':
    app.run(debug=True)
