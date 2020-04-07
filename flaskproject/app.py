@@ -1,11 +1,12 @@
-from flask import Flask,render_template,request,session,redirect,url_for
+from flask import Flask,render_template,request,session,redirect,url_for,flash
 from flask_mysqldb import MySQL,MySQLdb
 from MySQLdb.connections import OperationalError
-from flask_mail import Mail
+from flask_mail import Mail,Message
 from flask_shorturl import ShortUrl
 from werkzeug.security import generate_password_hash,check_password_hash
 import datetime
 import jwt
+import uuid
 
 
 
@@ -73,18 +74,25 @@ def register():
 def forgotpassword():
    if request.method == "POST":
       email = request.form["email"]
+      token = str(uuid.uuid4())
       cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-      # cur.execute("SELECT * FROM users WHRERE username=%s",[username])
-      cur.execute( "SELECT * FROM users WHERE email LIKE %s", (email,) )
-      user = cur.fetchone()
-      print(user)
-      cur.close()
-      token = tokenActivation(user["username"])
-      surl = url_for(token,_external=True)
-      print(surl)
-      print(token)
-      return "please check mail"
+      result=cur.execute( "SELECT * FROM users WHERE email LIKE %s", (email,) )
+      
+      if result>0:
+         user = cur.fetchone()
+         msg = Message(subject="forgot password request",sender="divyavanakuri48@gmail.com",recipients=[email])
+         msg.body = render_template("sent.html",token=token,data=user)
+         mail.sent(msg)   
+         cur = mysql.connection.cursor()
+         cur.execute( "UPDATE users SET token=%s WHERE email LIKE %s", [token,email] )
+         mysql.connection.commit()
+         cur.close()
+         flash("Email already sent to your email,successfully")
+         return redirect('/forgotpassword')
+      else:
+         flash("Email do not match","danger")
    return render_template("forgotpassword.html")
+
 
 def tokenActivation(username):
     """
