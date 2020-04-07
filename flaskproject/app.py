@@ -60,7 +60,9 @@ def register():
       return "Registeration done successfully"
    return render_template("register.html")
 
-
+@app.route('/forgotpassword',methods=["GET","POST"])
+def forgotpassword():
+   return "forgotpassword"
 
 @app.route('/database')
 def database():
