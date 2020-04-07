@@ -1,10 +1,10 @@
-from flask import Flask,render_template,request,session
+from flask import Flask,render_template,request,session,redirect,url_for
 from flask_mysqldb import MySQL,MySQLdb
 from MySQLdb.connections import OperationalError
 import bcrypt
 
 app = Flask(__name__)
-
+app.config["SECRET_KEY"]="exobts2020@#$%^^&"
 #mysql database connection 
 app.config["MYSQL_HOST"]="localhost"
 app.config["MYSQL_PORT"]=3306
@@ -31,11 +31,11 @@ def login():
       user = cur.fetchone()
       print(user)
       cur.close()
-      if len(user)>0:
-         if (password,user["password"]) == user["password"]:
-            session["username"] = user["username"]
-            session["email"] = user["email"]
-            return render_template("home.html")
+      
+      if password == user["password"]:
+         session["username"] = user["username"]
+         session["email"] = user["email"]
+         return render_template("home.html")
       else:
          return "Error password and user not match"
    return render_template("login.html")
@@ -51,9 +51,9 @@ def register():
       #cur.execute('''CREATE TABLE users (username VARCHAR(30),email VARCHAR(50),password VARCHAR(100))''')
       cur.execute("INSERT INTO  users (username,email,password) VALUES(%s,%s,%s)",(username,email,password))
       mysql.connection.commit()
-      session["username"] = username      
+      # session["username"] = username      
       cur.close()
-      return "successfully registered"
+      return "Registeration done successfully"
    return render_template("register.html")
 
 @app.route('/database')
@@ -69,5 +69,4 @@ def database():
       return "Table already existed"
 
 if __name__ == '__main__':
-   app.secret_key="exobts2020@#$$^&(@!#^("
    app.run(debug=True)
