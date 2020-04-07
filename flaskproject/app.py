@@ -94,6 +94,8 @@ def forgotpassword():
    return render_template("forgotpassword.html")
 
 
+
+
 def tokenActivation(username):
     """
     Generates the Auth Token
@@ -113,7 +115,9 @@ def tokenActivation(username):
     except Exception as e:
         return e
 
-
+@app.route('/reset/<token>',methods=["GET","POST"])
+def reset(token):
+   return render_template("resetpassword.html")
 
 @app.route('/database')
 def database():
