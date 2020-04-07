@@ -1,5 +1,5 @@
 from flask import Flask,render_template,request,session
-from flask_mysqldb import MySQL
+from flask_mysqldb import MySQL,MySQLdb
 from MySQLdb.connections import OperationalError
 
 
@@ -24,6 +24,10 @@ def login():
    if request.method == "POST":
       username = request.form["username"]
       password = request.form["password"]
+      cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+      cur.execute("SELECT * FROM users WHRERE username=%s",(username,))
+      user = cur.fetchone()
+      cur.close()
    return render_template("login.html")
 
 @app.route('/register',methods=["GET","POST"])
