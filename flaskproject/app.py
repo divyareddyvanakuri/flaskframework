@@ -1,7 +1,7 @@
 from flask import Flask,render_template,request,session
 from flask_mysqldb import MySQL,MySQLdb
 from MySQLdb.connections import OperationalError
-
+import bcrypt
 
 app = Flask(__name__)
 
@@ -27,7 +27,14 @@ def login():
       cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
       cur.execute("SELECT * FROM users WHRERE username=%s",(username,))
       user = cur.fetchone()
+      print(user)
       cur.close()
+      if len(user)>0:
+         if (password,user["password"]) == user["password"]:
+            session["username"] = user["username"]
+            session["email"] = user["email"]
+      else:
+         return "Error password and user not match"
    return render_template("login.html")
 
 @app.route('/register',methods=["GET","POST"])
