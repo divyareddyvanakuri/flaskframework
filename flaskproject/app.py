@@ -4,8 +4,6 @@ from MySQLdb.connections import OperationalError
 from flask_mail import Mail
 from flask_shorturl import ShortUrl
 from werkzeug.security import generate_password_hash,check_password_hash
-# import bcrypt
-import bcrypt
 import datetime
 import jwt
 
@@ -81,7 +79,10 @@ def forgotpassword():
       user = cur.fetchone()
       print(user)
       cur.close()
-      
+      token = tokenActivation(user["username"])
+      surl = ShortUrl(token)
+      print(surl)
+      print(token)
       return "please check mail"
    return render_template("forgotpassword.html")
 
@@ -99,7 +100,24 @@ def database():
 
 
 
-
+def tokenActivation(username):
+    """
+    Generates the Auth Token
+    :return: string
+    """
+    try:
+        payload = {
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
+            'iat': datetime.datetime.utcnow(),
+            'sub': username
+        }
+        return jwt.encode(
+            payload,
+            app.config.get('SECRET_KEY'),
+            algorithm='HS256'
+        )
+    except Exception as e:
+        return e
 
 if __name__ == '__main__':
    app.run(debug=True)
