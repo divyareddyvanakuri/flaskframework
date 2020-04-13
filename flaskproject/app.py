@@ -1,27 +1,37 @@
 from flask import Flask,render_template,request,session,redirect,url_for,flash
-from flask_mysqldb import MySQL,MySQLdb
-from MySQLdb.connections import OperationalError
+from app import app
 from flask_mail import Mail,Message
 from flask_shorturl import ShortUrl
 from werkzeug.security import generate_password_hash,check_password_hash
 import datetime
 import jwt
 import uuid
+from flask_wtf.csrf import CSRFProtect,CSRFError
+from .form import LogInForm,SignUpForm,ForgotPasswordForm,ResetPasswordForm
+from .qurey import  userauthentication,usernameauthentication,emailauthentication,createuser,activateaccount,passwordupdation
+from itsdangerous import URLSafeTimedSerializer,SignatureExpired
+import os
 
 
+s = URLSafeTimedSerializer('Thisissecret!')
+app.config.update(dict(
+    SECRET_KEY="powerful secretkey",
+    WTF_CSRF_SECRET_KEY="a csrf secret key"
+))
 
-app = Flask(__name__)
+app.config.update(
+	MAIL_DEBUG =True,
+	#EMAIL SETTINGS
+	MAIL_SERVER='smtp.gmail.com',
+	MAIL_PORT=465,
+	MAIL_USE_SSL=True,
+   MAIL_USE_TLS = False,
+	MAIL_USERNAME = 'divyavanakuri48@gmail.com',
+	MAIL_PASSWORD = os.environ['EMAIL_PASSWORD'],
+   MAIL_DEFAULT_SENDER = 'divyavanakuri48@gmail.com'
+	)
 mail = Mail(app)
-app.config["SECRET_KEY"]="exobts2020@#$%^^&"
-#mysql database connection 
-app.config["MYSQL_HOST"]="localhost"
-app.config["MYSQL_PORT"]=3306
-app.config["MYSQL_USER"]="Divya"
-app.config["MYSQL_PASSWORD"] = ""
-app.config["MYSQL_DB"]="flask"
-app.config["MYSQL_CURSORCLASS"]="DictCursor"
-
-mysql = MySQL(app)
+csrf = CSRFProtect(app)
 
 @app.route('/')
 def home():
@@ -29,27 +39,22 @@ def home():
 
 @app.route('/login',methods=["GET","POST"])
 def login():
-   if request.method == "POST":
-      username = request.form["username"]
-      password = request.form["password"]
-      try:
-         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-         cur.execute( "SELECT * FROM users WHERE username LIKE %s", (username,) )
-         user = cur.fetchone()
-         print(user)
-         cur.close()
-         try:
-            if check_password_hash(user["password"], password,method="sha256"):
-               session["username"] = user["username"]
-               session["email"] = user["email"]
-               return render_template("home.html")
-            else:
-               return "Error password and user not match"
-         except UnicodeEncodeError as err:
-            flash("somthing went wrong:",err)
-      except OperationalError as err:
-         flash("somthing went wrong:",err)
-   return render_template("login.html")
+   form = LogInForm()
+   if form.validate_on_submit():
+      username = form.username.data
+      password = form.password.data
+      user = userauthentication(username)
+   try:
+      if check_password_hash(user["password"], password) and user['is_active']:
+         session["username"] = user["username"]
+         session["email"] = user["email"]
+         return render_template("home.html")
+      else:
+         return "Error password and user not match or else user was not active"
+   except UnicodeError as err:
+      flash("somthing went wrong:",err)
+
+   return render_template("login.html",form=form)
 
 @app.route("/logout")
 def logout():
@@ -57,78 +62,81 @@ def logout():
    return render_template("home.html")
 
 @app.route('/register',methods=["GET","POST"])
+@csrf.exempt
 def register():
-   if request.method == "POST":
-      username=request.form["username"]
-      email=request.form["email"]
-      password=request.form["password"]
-      confirmpassword=request.form["confirmpassword"]
-      hash_password = generate_password_hash(password,method="sha256")
-      print(hash_password)
-      cur = mysql.connection.cursor()
-      #cur.execute('''CREATE TABLE users (username VARCHAR(30),email VARCHAR(50),password VARCHAR(100))''')
-      cur.execute("INSERT INTO  users (username,email,password) VALUES(%s,%s,%s)",(username,email,hash_password))
-      mysql.connection.commit()
-      # session["username"] = username      
-      cur.close()
-      return "Registeration done successfully"
-   return render_template("register.html")
+   form=SignUpForm()
+   if form.validate_on_submit():
+      username = form.username.data
+      email = form.email.data
+      password = form.password.data
+      confirmpassword = form.confirmpassword.data
+      if usernameauthentication(username):
+         return "username should be unique"
+      if emailauthentication(email):
+         return "email id should be unique"
+      if password == confirmpassword:
+         hash_password = generate_password_hash(password,method="sha256")
+         createuser(username,email,hash_password)
+      token = s.dumps(email,salt='email-confirm')
+      msg = Message('Activate',sender='divyavanakuri48@gmail.com',recipients=[email])
+      link = url_for('activate',token=token,_external=True)
+      msg.body = render_template("activate.html",link=link,email=email)
+      print(msg)
+      mail.send(msg)
+      return "registeration done successfully,please activate account through mailed link"
+   return render_template("register.html",form=form)
+
+@app.route('/activate/<token>',methods=["GET","POST"])
+def activate(token):
+   try:
+      email = s.loads(token,salt='email-confirm')
+      print(email)
+      user = emailauthentication(email)
+      print(user)
+      if user:
+         activateaccount(email)
+      else:
+         return "invalide details"
+      return "Your account activated successfully,please login"
+   except SignatureExpired:
+      return '<h1>the token is expired</h1>'
+   
 
 @app.route('/forgotpassword',methods=["GET","POST"])
 def forgotpassword():
    if request.method == "POST":
       email = request.form["email"]
-      token = str(uuid.uuid4())
-      cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-      result=cur.execute( "SELECT * FROM users WHERE email LIKE %s", (email,) )
-      
-      if result>0:
-         user = cur.fetchone()
-         msg = Message(subject="forgot password request",sender="divyavanakuri48@gmail.com",recipients=[email])
-         msg.body = render_template("sent.html",token=token,data=user)
-         mail.sent(msg)   
-         cur = mysql.connection.cursor()
-         cur.execute( "UPDATE users SET token=%s WHERE email LIKE %s", [token,email] )
-         mysql.connection.commit()
-         cur.close()
-         flash("Email already sent to your email,successfully")
-         return redirect('/forgotpassword')
-      else:
-         flash("Email do not match","danger")
-   return render_template("forgotpassword.html")
+      token = s.dumps(email,salt='email-confirm')
+      msg = Message('ResetPassword',sender='divyavanakuri48@gmail.com',recipients=[email])
+      link = url_for('resetpassword',token=token,_external=True)
+      msg.body = render_template("sent.html",link=link,email=email)
+      print(msg)
+      mail.send(msg)
+      return "Email was sent successfully to your account"
+   return render_template('forgotpassword.html')
 
-@app.route('/reset/<token>',methods=["GET","POST"])
-def reset(token):
+
+@app.route('/resetpassword/<token>')
+def resetpassword(token):
    if request.method == "POST":
       password = request.form["password"]
       confirmpassword = request.form["confirmpassword"]
-      token1 = str(uuid.uuid4())
-      cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-      cur.execute( "SELECT * FROM users WHERE email LIKE %s", (token,) )
-      user = cur.fetchone()
-      if user:   
-         cur = mysql.connection.cursor()
-         cur.execute( "UPDATE users SET token=%s,password=%s WHERE token LIKE %s", [token1,password,token] )
-         mysql.connection.commit()
-         cur.close()
-         flash("your password successfully updated","success")
-         return redirect('/login')
-      else:
-         flash("your token is invalide","danger")
-         return redirect("/")
+      try:
+         email = s.loads(token,salt='email-confirm')
+         print(email)
+         user = emailauthentication(email)
+         print(user)
+         if user: 
+            hash_password = generate_password_hash(password,method="sha256")  
+            passwordupdation(email,hash_passowrd)
+         else:
+            return redirect("/")
+      except SignatureExpired:
+         return '<h1>the token is expired</h1>'
+      # flash("your password successfully updated","success")
+      return redirect('/login')
    return render_template("resetpassword.html")
 
-@app.route('/database')
-def database():
-   try:
-      cur = mysql.connection.cursor()
-      # cur.execute('''CREATE TABLE example (id INTEGER ,name VARCHAR(20))''')
-      cur.execute("INSERT INTO  example (id,name) VALUES(%s,%s)",("2","divyareddy"))
-      mysql.connection.commit()
-      cur.close()
-      return "Table is created"
-   except OperationalError:
-      return "Table already existed"
 
 if __name__ == '__main__':
    app.run(debug=True)

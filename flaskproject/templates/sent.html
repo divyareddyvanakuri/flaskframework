@@ -1,5 +1,5 @@
-<p>Dear {{ request.form['email'] }},</p>
-<p>we have received a request to reset your password </p>
-<p>To reset password, please click on this link: </p>
+Dear {{ email }},
+we have received a request to reset your password 
+To reset password, please click on this link: 
 
-http://127.0.0.1:5000/reset/{{ token }}
+{{ link }}
